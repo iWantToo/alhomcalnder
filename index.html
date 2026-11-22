@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>تقويم الإنجاز</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#f3efe6;--card:#fffdf8;--ink:#1f3a2e;--muted:#7a8579;--line:#e4dcc8;
+  --green:#2f8f5b;--green2:#bfe3cd;--gold:#c8923a;--goldbg:#fff3d9;--rest:#e9e4f2;--restink:#6b5b95;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121a16;--card:#1b2620;--ink:#e8efe9;--muted:#93a198;--line:#2c3a32;
+    --green:#4fc07f;--green2:#24523a;--gold:#e5b055;--goldbg:#3a2f18;--rest:#2d2940;--restink:#b9a9ea;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121a16;--card:#1b2620;--ink:#e8efe9;--muted:#93a198;--line:#2c3a32;
+  --green:#4fc07f;--green2:#24523a;--gold:#e5b055;--goldbg:#3a2f18;--rest:#2d2940;--restink:#b9a9ea;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI','Noto Naskh Arabic',Tahoma,Arial,sans-serif}
+body{background:var(--bg);color:var(--ink);min-height:100vh;padding:14px;display:flex;justify-content:center}
+.app{width:100%;max-width:720px}
+.hero{background:linear-gradient(135deg,#2f8f5b,#1f6b43);color:#fff;border-radius:18px;padding:12px 16px;margin-bottom:10px}
+.hero small{opacity:.85;font-size:.85rem}
+.hero h1{font-size:1.2rem;font-weight:700;margin:2px 0 4px}
+.msg{font-size:.9rem;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 4px;text-align:center}
+.stat b{display:block;font-size:1.25rem;color:var(--green)}
+.stat span{font-size:.7rem;color:var(--muted)}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin-bottom:10px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--green));border-radius:99px;transition:width .5s}
+.nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.nav h2{font-size:1.25rem}
+.nav h2 small{display:block;font-size:.8rem;color:var(--muted);font-weight:400}
+.nav button{width:42px;height:42px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font-size:1.3rem;cursor:pointer}
+.wd,.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wd div{text-align:center;font-size:.8rem;color:var(--muted);padding:4px 0}
+.cell{aspect-ratio:1;background:var(--card);border:2px solid var(--line);border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;user-select:none;transition:transform .12s,background .2s}
+.cell:active{transform:scale(.92)}
+.cell .n{font-size:1.05rem;font-weight:600;margin-top:9px}
+.cell .h{font-size:.6rem;color:var(--muted)}
+.cell.empty{background:transparent;border:2px dashed var(--line);cursor:default}
+.cell.future{opacity:.45;cursor:default}
+.cell.today{border-color:var(--gold);background:var(--goldbg)}
+.cell.s1{background:var(--green);border-color:var(--green);color:#fff}
+.cell.s1 .h{color:#e6f6ec}
+.cell.s2{background:var(--green2);border-color:var(--green)}
+.cell.s3{background:var(--rest);border-color:var(--rest);color:var(--restink)}
+.mark{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-size:.7rem;font-weight:800;line-height:1}
+.pop{animation:pop .35s}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.legend{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:14px 0 6px;font-size:.8rem;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:5px}
+.legend i{width:14px;height:14px;border-radius:5px;display:inline-block}
+.foot{text-align:center;font-size:.8rem;color:var(--muted);line-height:1.8;margin-top:8px}
+.foot summary{cursor:pointer;list-style:none;text-decoration:underline}
+.reset{display:block;margin:12px auto 0;background:none;border:none;color:var(--muted);font-size:.78rem;text-decoration:underline;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero">
+    <small id="today"></small>
+    <h1>تقويم الإنجاز</h1>
+    <div class="msg" id="msg"></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="sMonth">0</b><span>أيام هذا الشهر</span></div>
+    <div class="stat"><b id="sStreak">0</b><span>السلسلة الحالية</span></div>
+    <div class="stat"><b id="sBest">0</b><span>أفضل سلسلة</span></div>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+
+  <div class="nav">
+    <button id="next" aria-label="الشهر التالي">›</button>
+    <h2 id="title"></h2>
+    <button id="prev" aria-label="الشهر السابق">‹</button>
+  </div>
+  <div class="wd" id="wd"></div>
+  <div class="grid" id="grid"></div>
+
+  <div class="legend">
+    <span><i style="background:var(--green)"></i> أنجزت الهدف</span>
+    <span><i style="background:var(--green2);border:1px solid var(--green)"></i> الحد الأدنى (10 دقائق)</span>
+    <span><i style="background:var(--rest)"></i> يوم راحة</span>
+  </div>
+  <details class="foot"><summary>كيف أستخدمه؟</summary>المس اليوم لتغيير حالته: أنجزت ← حد أدنى ← راحة ← فارغ.<br>اليوم الصعب الذي مشيت فيه 10 دقائق يُحسب نجاحاً كاملاً.<br>السلسلة لا تنكسر إلا إذا فاتك يومان متتاليان.</details>
+  <button class="reset" id="reset">مسح كل البيانات</button>
+</div>
+
+<script>
+(function(){
+  var KEY='habit-calendar-v1';
+  var months=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  var days=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  var now=new Date();
+  var view={m:now.getMonth(),y:now.getFullYear()};
+  var data={};
+  try{data=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){data={};}
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}}
+  function key(y,m,d){return y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');}
+  function hijri(date,opt){try{return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura',opt).format(date);}catch(e){return '';}}
+  function val(date){return data[key(date.getFullYear(),date.getMonth(),date.getDate())]||0;}
+  function strip(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
+  var today=strip(now);
+
+  // السلاسل: الحالة 1 و2 تُحسب، 3 (راحة) محايدة، والانقطاع بيومين فارغين متتاليين
+  function streaks(){
+    var keys=Object.keys(data).filter(function(k){return data[k];}).sort();
+    if(!keys.length)return {cur:0,best:0};
+    var first=new Date(keys[0]+'T00:00:00');
+    var run=0,best=0,miss=0,cur=0,d=new Date(first);
+    while(d<=today){
+      var v=val(d);
+      if(v===1||v===2){run++;miss=0;if(run>best)best=run;}
+      else if(v===3){miss=0;}
+      else{
+        var isToday=d.getTime()===today.getTime();
+        if(!isToday){miss++;if(miss>=2){run=0;}}
+      }
+      d.setDate(d.getDate()+1);
+    }
+    cur=run;
+    return {cur:cur,best:best};
+  }
+
+  var msgs={
+    start:['كل رحلة تبدأ بخطوة، وخطوتك اليوم هي أن تلبس الحذاء وتخرج.','المؤمن القوي خير وأحب إلى الله من المؤمن الضعيف. اجعل جسدك أمانة تحفظها.','لا تنتظر الحماس، ابدأ بعشر دقائق والحماس سيلحق بك.'],
+    mid:['أنت تبني نظاماً لا حماساً عابراً، واصل.','كل علامة ✓ هي صوت يقول لك: أنا شخص يفي بوعده.','تعثّر يوم لا يهدم ما بنيت، المهم ألا يفوتك يومان.'],
+    high:['ما شاء الله، سلسلة تستحق الفخر. حافظ على هدوئك وانتظامك.','أنت الآن مختلف عمّن كان يؤجّل. ثبّتك الله.','الاستمرار الهادئ أقوى من الاندفاع، وأنت تثبت ذلك.']
+  };
+  function pick(a){var d=Math.floor((today-new Date(2026,0,1))/864e5);return a[Math.abs(d)%a.length];}
+
+  function render(){
+    var y=view.y,m=view.m;
+    document.getElementById('today').textContent=days[now.getDay()]+' · '+now.getDate()+' '+months[now.getMonth()]+' · '+hijri(now,{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('title').innerHTML=months[m]+' '+y+'<small>'+hijri(new Date(y,m,1),{month:'long',year:'numeric'})+'</small>';
+    var wd=document.getElementById('wd');wd.innerHTML='';
+    days.forEach(function(n){var e=document.createElement('div');e.textContent=n.replace('ال','');wd.appendChild(e);});
+    var grid=document.getElementById('grid');grid.innerHTML='';
+    var first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+    for(var i=0;i<first;i++){var e=document.createElement('div');e.className='cell empty';grid.appendChild(e);}
+    var done=0,elapsed=0,rest=0;
+    for(var d=1;d<=dim;d++){
+      var date=new Date(y,m,d),v=val(date),fut=date>today,isT=date.getTime()===today.getTime();
+      if(!fut){elapsed++;if(v===3)rest++;}
+      if(v===1||v===2)done++;
+      var c=document.createElement('div');
+      c.className='cell'+(v?' s'+v:'')+(fut?' future':'')+(isT?' today':'');
+      var mark=v===1?'✓':v===2?'✓':v===3?'☾':'';
+      c.innerHTML=(mark?'<span class="mark">'+mark+'</span>':'')+'<span class="n">'+d+'</span><span class="h">'+hijri(date,{day:'numeric'})+'</span>';
+      if(!fut){(function(date,c){c.addEventListener('click',function(){
+        var k=key(date.getFullYear(),date.getMonth(),date.getDate());
+        var nv=((data[k]||0)+1)%4;
+        if(nv)data[k]=nv;else delete data[k];
+        save();render();
+        var cells=document.querySelectorAll('.cell');
+        var idx=first+date.getDate()-1;if(cells[idx]&&nv)cells[idx].classList.add('pop');
+      });})(date,c);}
+      grid.appendChild(c);
+    }
+    var s=streaks();
+    document.getElementById('sMonth').textContent=done;
+    document.getElementById('sStreak').textContent=s.cur;
+    document.getElementById('sBest').textContent=s.best;
+    var denom=Math.max(1,elapsed-rest);
+    document.getElementById('bar').style.width=Math.min(100,Math.round(done/denom*100))+'%';
+    var pool=s.cur>=7?msgs.high:s.cur>=2?msgs.mid:msgs.start;
+    document.getElementById('msg').textContent=pick(pool);
+  }
+  document.getElementById('prev').onclick=function(){view.m--;if(view.m<0){view.m=11;view.y--;}render();};
+  document.getElementById('next').onclick=function(){view.m++;if(view.m>11){view.m=0;view.y++;}render();};
+  document.getElementById('reset').onclick=function(){if(confirm('هل تريد مسح كل العلامات؟')){data={};save();render();}};
+  render();
+})();
+</script>
+</body>
+</html>
